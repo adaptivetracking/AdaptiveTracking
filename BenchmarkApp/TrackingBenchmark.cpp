@@ -376,7 +376,7 @@ path getNonExistingFile(path basename) {
 
 int main(int argc, char *argv[]) {
 	if (argc < 4) {
-		std::cout << "Usage: trackingBenchmarkApp directory testconfig algorithmconfig1 [algorithmconfig2 [algorithmconfig3 [...]]]" << std::endl;
+		std::cout << "Usage: ./BenchmarkApp directory testconfig algorithmconfig1 [algorithmconfig2 [algorithmconfig3 [...]]]" << std::endl;
 		std::cout << "where" << std::endl;
 		std::cout << " directory ... directory to write the test results and logs into" << std::endl;
 		std::cout << " testconfig ... configuration file of the test sequences to run" << std::endl;

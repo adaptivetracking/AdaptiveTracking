@@ -499,29 +499,23 @@ void AdaptiveTracking::stop() {
 }
 
 int main(int argc, char *argv[]) {
-	int verboseLevelText;
-	int verboseLevelImages;
 	int deviceId;
-	string filename, directory, groundTruthFilename;
-	bool useCamera = false, useFile = false, useDirectory = false, useGroundTruth = false, bobot = false;
-	string configFile;
-	string outputFile;
+	string configFile, video, directory, bobot, simple, outputFile;
+	bool useVideo, useDirectory, useCamera, useBobot, useSimple;
 	int outputFps = -1;
 
 	try {
 		po::options_description desc("Allowed options");
 		desc.add_options()
 			("help,h", "Produce help message")
-			("verbose-text,v", po::value<int>(&verboseLevelText)->implicit_value(2)->default_value(0,"minimal text output"), "Enable text-verbosity (optionally specify level)")
-			("verbose-images,w", po::value<int>(&verboseLevelImages)->implicit_value(2)->default_value(0,"minimal image output"), "Enable image-verbosity (optionally specify level)")
-			("filename,f", po::value< string >(&filename), "A filename of a video to run the tracking")
-			("directory,i", po::value< string >(&directory), "Use a directory as input")
-			("device,d", po::value<int>(&deviceId)->implicit_value(0), "A camera device ID for use with the OpenCV camera driver")
-			("ground-truth,g", po::value<string>(&groundTruthFilename), "Name of a file containing ground truth information in BoBoT format")
-			("bobot,b", "Flag for indicating BoBoT format on the ground truth file")
-			("config,c", po::value< string >(&configFile)->default_value("default.cfg","default.cfg"), "The filename to the config file.")
+			("config,c", po::value<string>(&configFile)->default_value("default.cfg","default.cfg"), "Tracking configuration file.")
+			("video,v", po::value<string>(&video), "Video file")
+			("directory,i", po::value<string>(&directory), "Directory containing the images")
+			("device,d", po::value<int>(&deviceId)->implicit_value(0), "Device ID of the webcam")
+			("annotations-bobot,b", po::value<string>(&bobot), "Ground truth annotations in BoBoT format")
+			("annotations-simple,s", po::value<string>(&simple), "Ground truth annotations in simple format")
 			("output,o", po::value< string >(&outputFile)->default_value("","none"), "Filename to a video file for storing the image data.")
-			("output-fps,r", po::value<int>(&outputFps)->default_value(-1), "The framerate of the output video.")
+			("output-fps,f", po::value<int>(&outputFps)->default_value(-1), "Framerate of the output video.")
 			;
 
 		po::variables_map vm;
@@ -529,35 +523,33 @@ int main(int argc, char *argv[]) {
 		po::notify(vm);
 
 		if (vm.count("help")) {
-			std::cout << "Usage: adaptiveTrackingApp [options]" << std::endl;
+			std::cout << "Usage: ./TrackingApp [options]" << std::endl;
 			std::cout << desc;
 			return 0;
 		}
-		if (vm.count("filename"))
-			useFile = true;
-		if (vm.count("directory"))
+
+		if (vm.count("video") + vm.count("directory") + vm.count("device") != 1) {
+			std::cout << "Usage: Please specify a camera, file or directory (and only one of them) to run the program. Use -h for help." << std::endl;
+			return -1;
+		}
+		if (vm.count("video"))
+			useVideo = true;
+		else if (vm.count("directory"))
 			useDirectory = true;
-		if (vm.count("device"))
+		else if (vm.count("device"))
 			useCamera = true;
-		if (vm.count("ground-truth"))
-			useGroundTruth = true;
-		if (vm.count("bobot"))
-			bobot = true;
+
+		if (vm.count("annotations-bobot") + vm.count("annotations-simple") > 1) {
+			std::cout << "Usage: Please specify at most one file containing ground truth annotations. Use -h for help." << std::endl;
+			return -1;
+		}
+		if (vm.count("annotations-bobot"))
+			useBobot = true;
+		else if (vm.count("annotations-simple"))
+			useSimple = true;
 	}
 	catch (std::exception& e) {
 		std::cout << e.what() << std::endl;
-		return -1;
-	}
-
-	int inputsSpecified = 0;
-	if (useCamera)
-		inputsSpecified++;
-	if (useFile)
-		inputsSpecified++;
-	if (useDirectory)
-		inputsSpecified++;
-	if (inputsSpecified != 1) {
-		std::cout << "Usage: Please specify a camera, file or directory (and only one of them) to run the program. Use -h for help." << std::endl;
 		return -1;
 	}
 
@@ -566,15 +558,15 @@ int main(int argc, char *argv[]) {
 	shared_ptr<ImageSource> imageSource;
 	if (useCamera)
 		imageSource.reset(new CameraImageSource(deviceId));
-	else if (useFile)
-		imageSource.reset(new VideoImageSource(filename));
+	else if (useVideo)
+		imageSource.reset(new VideoImageSource(video));
 	else if (useDirectory)
 		imageSource.reset(new DirectoryImageSource(directory));
 	shared_ptr<AnnotationSource> annotationSource;
-	if (useGroundTruth && bobot)
-		annotationSource.reset(new BobotAnnotationSource(groundTruthFilename, imageSource));
-	else if (useGroundTruth)
-		annotationSource.reset(new SimpleAnnotationSource(groundTruthFilename));
+	if (useBobot)
+		annotationSource.reset(new BobotAnnotationSource(bobot, imageSource));
+	else if (useSimple)
+		annotationSource.reset(new SimpleAnnotationSource(simple));
 	else
 		annotationSource.reset(new EmptyAnnotationSource());
 	unique_ptr<AnnotatedImageSource> annotatedImageSource(new AnnotatedImageSource(imageSource, annotationSource));
@@ -590,7 +582,7 @@ int main(int argc, char *argv[]) {
 
 	ptree config;
 	read_info(configFile, config);
-	config.put("tracking.initialization", useGroundTruth ? "groundtruth" : "manual");
+	config.put("tracking.initialization", (useBobot || useSimple) ? "groundtruth" : "manual");
 	try {
 		unique_ptr<AdaptiveTracking> tracker(new AdaptiveTracking(move(annotatedImageSource), move(imageSink), config.get_child("tracking")));
 		tracker->run();

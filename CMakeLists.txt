@@ -12,7 +12,7 @@ if (HAS_CXX11_FLAG)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 endif()
 
-# Core libraries:
+# Libraries:
 add_subdirectory(libLogging)			# Text logging
 add_subdirectory(libImageIO)			# Input-library for cameras, Kinect and hard-drive images.
 add_subdirectory(libImageProcessing)	# Image pyramids, patch extraction, feature transformation
@@ -20,8 +20,8 @@ add_subdirectory(libClassification)		# Classification library
 add_subdirectory(libSvm)				# libSVM (support vector classification)
 add_subdirectory(libCondensation)		# Condensation tracking (particle filter)
 
-# Tracking apps:
-add_subdirectory(adaptiveTrackingApp)	# Adaptive tracking app.
-add_subdirectory(trackingBenchmarkApp)	# Benchmark app for adaptive condensation tracking.
-add_subdirectory(VideoPlayerApp)		# App for playing videos, showing annotations and saving videos with annotations.
+# Applications:
+add_subdirectory(TrackingApp)	# Adaptive tracking app.
+add_subdirectory(BenchmarkApp)	# Benchmark app for testing the adaptive tracking.
+add_subdirectory(PlayerApp)		# App for playing videos, showing annotations and saving videos with annotations.
 
