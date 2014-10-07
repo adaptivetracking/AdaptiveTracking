@@ -8,8 +8,8 @@ This project contains a library and demo applications for adaptive real-time tra
 
 ### Prerequisites
 
-* [Boost](http://www.boost.org/) Version >= 1.48.0
-* [OpenCV](http://opencv.org/) Version >= 2.4.3
+* [Boost](http://www.boost.org/) >= 1.48.0
+* [OpenCV](http://opencv.org/) >= 2.4.3
 
 
 ### Linux
@@ -68,8 +68,10 @@ This application shows the tracking on a single video. The tracking is initializ
 4. If no ground truth is given: Initialize the tracker by drawing a bounding box using the mouse
 5. Exit the application by pressing `q`
 
-Example: `$ ./TrackingApp -d 0` (shows the videos stream of the webcam, tracking must be initialized manually)
-Example: `$ ./TrackingApp -v /path/to/video.avi -b /path/to/groundtruth.txt -o /path/to/output-video.avi -f 25` (shows a video, tracking is initialized by ground truth, creates an output video with 25 FPS containing the frames with tracking output (bounding boxes))
+Examples:
+
+* `$ ./TrackingApp -d 0` (shows the videos stream of the webcam, tracking must be initialized manually)
+* `$ ./TrackingApp -v /path/to/video.avi -b /path/to/groundtruth.txt -o /path/to/output-video.avi -f 25` (shows a video, tracking is initialized by ground truth, creates an output video with 25 FPS containing the frames with tracking output (bounding boxes))
 
 
 ### BenchmarkApp
@@ -85,7 +87,9 @@ This application runs test sequences on several algorithms, evaluating their per
   3. Configurations of the algorithms: `algorithm1.cfg algorithm2.cfg ...`
 5. Wait until the evaluation is finished, overall results can be seen on console, detailled results are in the result directory
 
-Example: `$ ./BenchmarkApp bobot-results bobot.cfg BT.cfg OF.cfg LC.cfg OF-LC.cfg OF-LC-SW.cfg` (evaluates our tracking variations using the BoBoT dataset)
+Example:
+
+* `$ ./BenchmarkApp bobot-results bobot.cfg BT.cfg OF.cfg LC.cfg OF-LC.cfg OF-LC-SW.cfg` (evaluates our tracking variations using the BoBoT dataset - see the [project website](https://adaptivetracking.github.io/) for the configuration files)
 
 
 ### PlayerApp
@@ -105,6 +109,9 @@ This application shows an image sequence, optionally drawing annotations on top.
 3. The video can be paused and resumed by pressing `p`
 4. Wait until the replay is finished or exit by pressing `q`
 
-Example: `$ ./PlayerApp /path/to/video.avi` (shows a video)
-Example: `$ ./PlayerApp /path/to/video.avi -b /path/to/ground-truth.txt /path/to/tracking-output.txt -o /path/to/output-video.avi 25 MJPG` (shows a video with ground truth annotations and tracking output and stores the video with both bounding boxes into a video file)
+
+Examples:
+
+* `$ ./PlayerApp /path/to/video.avi` (shows a video)
+* `$ ./PlayerApp /path/to/video.avi -b /path/to/ground-truth.txt /path/to/tracking-output.txt -o /path/to/output-video.avi 25 MJPG` (shows a video with ground truth annotations and tracking output and stores the video with both bounding boxes into a video file)
 
