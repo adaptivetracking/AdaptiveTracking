@@ -114,17 +114,17 @@ int main(int argc, char *argv[]) {
 	else
 		imageSource.reset(new VideoImageSource(sourceFile.string()));
 
-	enum GroundTruthType { UNKNOWN, SIMPLE, BOBOT };
-	GroundTruthType type = GroundTruthType::UNKNOWN;
+	enum AnnotationType { UNKNOWN, SIMPLE, BOBOT };
+	AnnotationType type = AnnotationType::UNKNOWN;
 	vector<shared_ptr<AnnotationSource>> annotationSources;
 	int i = 2;
 	for (; i < argc; ++i) {
 		if (argv[i][0] == '-') {
 			string option = string(argv[i]);
 			if ("-s" == option)
-				type = GroundTruthType::SIMPLE;
+				type = AnnotationType::SIMPLE;
 			else if ("-b" == option)
-				type = GroundTruthType::BOBOT;
+				type = AnnotationType::BOBOT;
 			else if ("-o" == option)
 				break;
 			else
@@ -134,9 +134,9 @@ int main(int argc, char *argv[]) {
 		path annotationFile(argv[i]);
 		if (!exists(annotationFile))
 			throw invalid_argument("annotation file " + annotationFile.string() + " does not exist");
-		if (type == GroundTruthType::SIMPLE)
+		if (type == AnnotationType::SIMPLE)
 			annotationSources.push_back(make_shared<SimpleAnnotationSource>(annotationFile.string()));
-		else if (type == GroundTruthType::BOBOT)
+		else if (type == AnnotationType::BOBOT)
 			annotationSources.push_back(make_shared<BobotAnnotationSource>(annotationFile.string(), imageSource));
 		else
 			throw invalid_argument("no type specified for annotation file " + annotationFile.string() + " (needs option -s or -b before giving annotation files)");
