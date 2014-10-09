@@ -8,6 +8,10 @@ This project contains a library and demo applications for adaptive real-time tra
 
 ### Prerequisites
 
+* C++11
+  * On Linux: gcc >= 4.7.2
+  * On Windows: VisualStudio >= 2013
+* [CMake](http://www.cmake.org/) >= 2.8
 * [Boost](http://www.boost.org/) >= 1.48.0
 * [OpenCV](http://opencv.org/) >= 2.4.3
 
