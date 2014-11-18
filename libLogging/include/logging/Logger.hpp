@@ -20,8 +20,6 @@ class Appender;
 
 /**
  * A logger that is e.g. responsible for a certain class or namespace. A logger can log to several outputs (appenders).
- *
- * Possible TODO: Instead of using a string, make the logger usable like an ostream, like: "log[WARN] << "hello" << var << endl;".
  */
 class Logger {
 public:

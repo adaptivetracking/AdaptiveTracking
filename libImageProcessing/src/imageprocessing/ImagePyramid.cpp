@@ -12,8 +12,6 @@
 #include "logging/LoggerFactory.hpp"
 #include "logging/Logger.hpp"
 #include "opencv2/imgproc/imgproc.hpp"
-#include <iostream>
-#include <sstream>
 #include <stdexcept>
 
 using logging::LoggerFactory;
@@ -23,19 +21,10 @@ using cv::resize;
 using std::vector;
 using std::shared_ptr;
 using std::pair;
-using std::string; // TODO nur für createException
-using std::ostringstream; // TODO nur für createException
 using std::make_shared;
 using std::invalid_argument;
 
 namespace imageprocessing {
-
-template<class T>// TODO in header-datei verschieben, die in jedem projekt eingebunden werden kann
-static T createException(const string& file, int line, const string& message) {
-	ostringstream text;
-	text << file.substr(file.find_last_of("/\\") + 1) << ':' << line << ':' << ' ' << message;
-	return T(text.str());
-}
 
 ImagePyramid::ImagePyramid(size_t octaveLayerCount, double minScaleFactor, double maxScaleFactor) :
 		octaveLayerCount(octaveLayerCount), incrementalScaleFactor(0),
@@ -43,11 +32,11 @@ ImagePyramid::ImagePyramid(size_t octaveLayerCount, double minScaleFactor, doubl
 		firstLayer(0), layers(), sourceImage(), sourcePyramid(), version(-1),
 		imageFilter(make_shared<ChainedFilter>()), layerFilter(make_shared<ChainedFilter>()) {
 	if (octaveLayerCount == 0)
-		throw createException<invalid_argument>(__FILE__, __LINE__, "the number of layers per octave must be greater than zero");
+		throw invalid_argument("ImagePyramid: the number of layers per octave must be greater than zero");
 	if (minScaleFactor <= 0)
-		throw createException<invalid_argument>(__FILE__, __LINE__, "the minimum scale factor must be greater than zero");
+		throw invalid_argument("ImagePyramid: the minimum scale factor must be greater than zero");
 	if (maxScaleFactor > 1)
-		throw createException<invalid_argument>(__FILE__, __LINE__, "the maximum scale factor must not exceed one");
+		throw invalid_argument("ImagePyramid: the maximum scale factor must not exceed one");
 	incrementalScaleFactor = pow(0.5, 1. / octaveLayerCount);
 }
 
@@ -70,9 +59,9 @@ void ImagePyramid::setSource(const Mat& image) {
 
 void ImagePyramid::setSource(const shared_ptr<VersionedImage>& image) {
 	if (octaveLayerCount == 0)
-		throw createException<invalid_argument>(__FILE__, __LINE__, "the number of layers per octave must be greater than zero");
+		throw invalid_argument("ImagePyramid: the number of layers per octave must be greater than zero");
 	if (minScaleFactor <= 0)
-		throw createException<invalid_argument>(__FILE__, __LINE__, "the minimum scale factor must be greater than zero");
+		throw invalid_argument("ImagePyramid: the minimum scale factor must be greater than zero");
 	sourcePyramid.reset();
 	sourceImage = image;
 }
@@ -87,7 +76,6 @@ void ImagePyramid::update() {
 		if (version != sourceImage->getVersion()) {
 			layers.clear();
 			Mat filteredImage = imageFilter->applyTo(sourceImage->getData());
-			// TODO wenn maxscale <= 0.5 -> erstmal pyrdown auf bild (etc pp)
 			for (size_t i = 0; i < octaveLayerCount; ++i) {
 				double scaleFactor = pow(incrementalScaleFactor, i);
 				Mat scaledImage;

@@ -29,7 +29,6 @@ FileAppender::FileAppender(LogLevel logLevel, string filename) : Appender(logLev
 	if (!file.is_open())
 		throw ios_base::failure("Error: Could not open or create log-file: " + filename);
 	file << getCurrentTime() << " Starting logging at log-level " << logLevelToString(logLevel) << " to file " << filename << std::endl;
-	// TODO We should really also output the loggerName here! So... maybe make a member variable that holds a reference to the appenders parent logger?
 }
 
 FileAppender::~FileAppender()

@@ -1,11 +1,11 @@
 /*
- * TrackingBenchmark.cpp
+ * Benchmark.cpp
  *
  *  Created on: 17.02.2014
  *      Author: poschmann
  */
 
-#include "TrackingBenchmark.hpp"
+#include "Benchmark.hpp"
 #include "logging/LoggerFactory.hpp"
 #include "logging/ConsoleAppender.hpp"
 #include "logging/FileAppender.hpp"
@@ -54,11 +54,11 @@ using std::istringstream;
 using std::runtime_error;
 using std::invalid_argument;
 
-TrackingBenchmark::TrackingBenchmark(ptree& config) {
+Benchmark::Benchmark(ptree& config) {
 	initTracking(config);
 }
 
-unique_ptr<ExampleManagement> TrackingBenchmark::createExampleManagement(ptree& config, shared_ptr<BinaryClassifier> classifier, bool positive) {
+unique_ptr<ExampleManagement> Benchmark::createExampleManagement(ptree& config, shared_ptr<BinaryClassifier> classifier, bool positive) {
 	if (config.get_value<string>() == "unlimited") {
 		return unique_ptr<ExampleManagement>(new UnlimitedExampleManagement(config.get<size_t>("required")));
 	} else if (config.get_value<string>() == "agebased") {
@@ -70,7 +70,7 @@ unique_ptr<ExampleManagement> TrackingBenchmark::createExampleManagement(ptree& 
 	}
 }
 
-shared_ptr<TrainableProbabilisticSvmClassifier> TrackingBenchmark::createSvm(ptree& config) {
+shared_ptr<TrainableProbabilisticSvmClassifier> Benchmark::createSvm(ptree& config) {
 	shared_ptr<LibSvmClassifier> svm = make_shared<LibSvmClassifier>(make_shared<LinearKernel>(), config.get<double>("training.C"));
 	svm->setPositiveExampleManagement(
 			unique_ptr<ExampleManagement>(createExampleManagement(config.get_child("training.positiveExamples"), svm, true)));
@@ -80,7 +80,7 @@ shared_ptr<TrainableProbabilisticSvmClassifier> TrackingBenchmark::createSvm(ptr
 			config.get<double>("probabilistic.logisticA"), config.get<double>("probabilistic.logisticB"));
 }
 
-void TrackingBenchmark::initTracking(ptree& config) {
+void Benchmark::initTracking(ptree& config) {
 	// create measurement model
 	shared_ptr<TrainableProbabilisticSvmClassifier> classifier = createSvm(config.get_child("measurement.classifier"));
 	shared_ptr<ExtendedHogBasedMeasurementModel> measurementModel = make_shared<ExtendedHogBasedMeasurementModel>(classifier);
@@ -141,7 +141,7 @@ void TrackingBenchmark::initTracking(ptree& config) {
 			config.get<double>("resampling.minSize"), config.get<double>("resampling.maxSize")));
 }
 
-pair<double, double> TrackingBenchmark::runTest(shared_ptr<AnnotatedImageSource> imageSource, shared_ptr<AnnotationSink> annotationSink) {
+pair<double, double> Benchmark::runTest(shared_ptr<AnnotatedImageSource> imageSource, shared_ptr<AnnotationSink> annotationSink) {
 	steady_clock::time_point start = steady_clock::now();
 	duration<double> condensationTime;
 
@@ -157,7 +157,7 @@ pair<double, double> TrackingBenchmark::runTest(shared_ptr<AnnotatedImageSource>
 		steady_clock::time_point condensationStart = steady_clock::now();
 		optional<Rect> position = tracker->initialize(frame, truth);
 		if (!position)
-			throw runtime_error("Adaptive tracker could not be initialized with " + lexical_cast<string>(truth));
+			throw runtime_error("adaptive tracker could not be initialized with " + lexical_cast<string>(truth));
 		steady_clock::time_point condensationEnd = steady_clock::now();
 		condensationTime += duration_cast<milliseconds>(condensationEnd - condensationStart);
 		annotationSink->add(*position);
@@ -185,7 +185,7 @@ pair<double, double> TrackingBenchmark::runTest(shared_ptr<AnnotatedImageSource>
 	return std::make_pair(fps, condensationFps);
 }
 
-double TrackingBenchmark::runTests(const path& resultsDirectory, size_t count, const ptree& testConfig, Logger& log) {
+double Benchmark::runTests(const path& resultsDirectory, size_t count, const ptree& testConfig, Logger& log) {
 	string testName = testConfig.get_value<string>();
 	optional<string> imageDirectory = testConfig.get_optional<string>("directory");
 	optional<string> videoFile = testConfig.get_optional<string>("file");
@@ -225,9 +225,6 @@ double TrackingBenchmark::runTests(const path& resultsDirectory, size_t count, c
 	path testDirectory(resultsDirectory.string() + "/" + testName);
 	if (!exists(testDirectory))
 		create_directory(testDirectory);
-	// TODO Boost must be compiled with --std=C++11 in order for the following line to be linkable (Linux & GCC)
-	// see http://boost.2283326.n4.nabble.com/Filesystem-problems-with-g-std-c-0x-td2639716.html for further information
-//	copy_file(groundTruthFile, testDirectory / "groundtruth");
 	size_t skipped = 0;
 	pair<double, double> fpsSum(0, 0);
 	for (size_t i = 0; i < count; ++i) {
@@ -255,7 +252,7 @@ double TrackingBenchmark::runTests(const path& resultsDirectory, size_t count, c
 	else if (skipped > 1)
 		log.info("skipped " + std::to_string(skipped) + " tests (were already done)");
 
-	double hitThreshold = 0.5;
+	double hitThreshold = 1.0 / 3.0;
 	size_t runCount = 0;
 	double hitM = 0;
 	double hitS = 0;
@@ -355,7 +352,7 @@ double TrackingBenchmark::runTests(const path& resultsDirectory, size_t count, c
 	return 100 * averageOverlapMean;
 }
 
-double TrackingBenchmark::computeOverlap(Rect a, Rect b) const {
+double Benchmark::computeOverlap(Rect a, Rect b) const {
 	double intersectionArea = (a & b).area();
 	double unionArea = a.area() + b.area() - intersectionArea;
 	if (unionArea == 0)
@@ -422,7 +419,7 @@ int main(int argc, char *argv[]) {
 		algorithmLog.addAppender(make_shared<FileAppender>(LogLevel::Info, algorithmLogFile.string()));
 
 		algorithmLog.info("Starting test runs for " + name);
-		TrackingBenchmark benchmark(algorithmConfig.get_child("tracking"));
+		Benchmark benchmark(algorithmConfig.get_child("tracking"));
 		auto iterators = testConfig.equal_range("test");
 		double scoreSum = 0;
 		size_t testCount = 0;

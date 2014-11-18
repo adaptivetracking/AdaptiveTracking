@@ -22,9 +22,6 @@ public:
 
 	/**
 	 * Constructs a new appender that logs to the console.
-	 * TODO: This is the same as the one in our base class. Why do we
-	 *			need to define this "again" here? Probably because if not,
-	 *			the compiler generates a ConsoleAppender() default constructor?
 	 *
 	 * param[in] loglevel The LogLevel at which to log.
 	 */

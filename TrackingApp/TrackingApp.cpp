@@ -1,11 +1,11 @@
 /*
- * AdaptiveTracking.cpp
+ * TrackingApp.cpp
  *
  *  Created on: 14.05.2013
  *      Author: poschmann
  */
 
-#include "AdaptiveTracking.hpp"
+#include "TrackingApp.hpp"
 #include "logging/LoggerFactory.hpp"
 #include "logging/Logger.hpp"
 #include "logging/ConsoleAppender.hpp"
@@ -52,16 +52,16 @@ using std::invalid_argument;
 
 namespace po = boost::program_options;
 
-const string AdaptiveTracking::videoWindowName = "Image";
-const string AdaptiveTracking::controlWindowName = "Controls";
+const string TrackingApp::videoWindowName = "Image";
+const string TrackingApp::controlWindowName = "Controls";
 
-AdaptiveTracking::AdaptiveTracking(unique_ptr<AnnotatedImageSource> imageSource, unique_ptr<ImageSink> imageSink, ptree& config) :
+TrackingApp::TrackingApp(unique_ptr<AnnotatedImageSource> imageSource, unique_ptr<ImageSink> imageSink, ptree& config) :
 		imageSource(move(imageSource)), imageSink(move(imageSink)) {
 	initTracking(config);
 	initGui();
 }
 
-unique_ptr<ExampleManagement> AdaptiveTracking::createExampleManagement(ptree& config, shared_ptr<BinaryClassifier> classifier, bool positive) {
+unique_ptr<ExampleManagement> TrackingApp::createExampleManagement(ptree& config, shared_ptr<BinaryClassifier> classifier, bool positive) {
 	if (config.get_value<string>() == "unlimited") {
 		return unique_ptr<ExampleManagement>(new UnlimitedExampleManagement(config.get<size_t>("required")));
 	} else if (config.get_value<string>() == "agebased") {
@@ -69,11 +69,11 @@ unique_ptr<ExampleManagement> AdaptiveTracking::createExampleManagement(ptree& c
 	} else if (config.get_value<string>() == "confidencebased") {
 		return unique_ptr<ExampleManagement>(new ConfidenceBasedExampleManagement(classifier, positive, config.get<size_t>("capacity"), config.get<size_t>("required")));
 	} else {
-		throw invalid_argument("AdaptiveTracking: invalid example management type: " + config.get_value<string>());
+		throw invalid_argument("invalid example management type: " + config.get_value<string>());
 	}
 }
 
-shared_ptr<TrainableProbabilisticSvmClassifier> AdaptiveTracking::createSvm(ptree& config) {
+shared_ptr<TrainableProbabilisticSvmClassifier> TrackingApp::createSvm(ptree& config) {
 	shared_ptr<LibSvmClassifier> svm = make_shared<LibSvmClassifier>(make_shared<LinearKernel>(), config.get<double>("training.C"));
 	svm->setPositiveExampleManagement(
 			unique_ptr<ExampleManagement>(createExampleManagement(config.get_child("training.positiveExamples"), svm, true)));
@@ -83,7 +83,7 @@ shared_ptr<TrainableProbabilisticSvmClassifier> AdaptiveTracking::createSvm(ptre
 			config.get<double>("probabilistic.logisticA"), config.get<double>("probabilistic.logisticB"));
 }
 
-void AdaptiveTracking::initTracking(ptree& config) {
+void TrackingApp::initTracking(ptree& config) {
 	// create measurement model
 	shared_ptr<TrainableProbabilisticSvmClassifier> classifier = createSvm(config.get_child("measurement.classifier"));
 	shared_ptr<ExtendedHogBasedMeasurementModel> measurementModel = make_shared<ExtendedHogBasedMeasurementModel>(classifier);
@@ -117,7 +117,7 @@ void AdaptiveTracking::initTracking(ptree& config) {
 	else if (config.get<string>("measurement.adaptation") == "CORRECTED_TRAJECTORY")
 		adaptation = ExtendedHogBasedMeasurementModel::Adaptation::CORRECTED_TRAJECTORY;
 	else
-		throw invalid_argument("AdaptiveTracking: invalid adaptation type: " + config.get<string>("measurement.adaptation"));
+		throw invalid_argument("invalid adaptation type: " + config.get<string>("measurement.adaptation"));
 	measurementModel->setAdaptation(adaptation,
 			config.get<double>("measurement.adaptationThreshold"),
 			config.get<double>("measurement.exclusionThreshold"));
@@ -135,7 +135,7 @@ void AdaptiveTracking::initTracking(ptree& config) {
 				simpleTransitionModel, config.get<double>("transition.positionDeviation"), config.get<double>("transition.sizeDeviation"));
 		transitionModel = opticalFlowTransitionModel;
 	} else {
-		throw invalid_argument("AdaptiveTracking: invalid transition model type: " + config.get<string>("transition"));
+		throw invalid_argument("invalid transition model type: " + config.get<string>("transition"));
 	}
 
 	// create tracker
@@ -150,11 +150,11 @@ void AdaptiveTracking::initTracking(ptree& config) {
 	} else if (config.get<string>("initialization") == "groundtruth") {
 		initialization = Initialization::GROUND_TRUTH;
 	} else {
-		throw invalid_argument("AdaptiveTracking: invalid initialization type: " + config.get<string>("initialization"));
+		throw invalid_argument("invalid initialization type: " + config.get<string>("initialization"));
 	}
 }
 
-void AdaptiveTracking::initGui() {
+void TrackingApp::initGui() {
 	drawSamples = false;
 	drawFlow = 0;
 
@@ -193,43 +193,43 @@ void AdaptiveTracking::initGui() {
 	}
 }
 
-void AdaptiveTracking::positionDeviationChanged(int state, void* userdata) {
-	AdaptiveTracking *tracking = (AdaptiveTracking*)userdata;
-	if (tracking->opticalFlowTransitionModel)
-		tracking->opticalFlowTransitionModel->setPositionDeviation(0.1 * state);
+void TrackingApp::positionDeviationChanged(int state, void* userdata) {
+	TrackingApp *application = (TrackingApp*)userdata;
+	if (application->opticalFlowTransitionModel)
+		application->opticalFlowTransitionModel->setPositionDeviation(0.1 * state);
 	else
-		tracking->simpleTransitionModel->setPositionDeviation(0.1 * state);
+		application->simpleTransitionModel->setPositionDeviation(0.1 * state);
 }
 
-void AdaptiveTracking::sizeDeviationChanged(int state, void* userdata) {
-	AdaptiveTracking *tracking = (AdaptiveTracking*)userdata;
-	if (tracking->opticalFlowTransitionModel)
-		tracking->opticalFlowTransitionModel->setSizeDeviation(0.01 * state);
+void TrackingApp::sizeDeviationChanged(int state, void* userdata) {
+	TrackingApp *application = (TrackingApp*)userdata;
+	if (application->opticalFlowTransitionModel)
+		application->opticalFlowTransitionModel->setSizeDeviation(0.01 * state);
 	else
-		tracking->simpleTransitionModel->setSizeDeviation(0.01 * state);
+		application->simpleTransitionModel->setSizeDeviation(0.01 * state);
 }
 
-void AdaptiveTracking::sampleCountChanged(int state, void* userdata) {
-	AdaptiveTracking *tracking = (AdaptiveTracking*)userdata;
-	tracking->tracker->setCount(state);
+void TrackingApp::sampleCountChanged(int state, void* userdata) {
+	TrackingApp *application = (TrackingApp*)userdata;
+	application->tracker->setCount(state);
 }
 
-void AdaptiveTracking::randomRateChanged(int state, void* userdata) {
-	AdaptiveTracking *tracking = (AdaptiveTracking*)userdata;
-	tracking->tracker->setRandomRate(0.01 * state);
+void TrackingApp::randomRateChanged(int state, void* userdata) {
+	TrackingApp *application = (TrackingApp*)userdata;
+	application->tracker->setRandomRate(0.01 * state);
 }
 
-void AdaptiveTracking::drawSamplesChanged(int state, void* userdata) {
-	AdaptiveTracking *tracking = (AdaptiveTracking*)userdata;
-	tracking->drawSamples = (state == 1);
+void TrackingApp::drawSamplesChanged(int state, void* userdata) {
+	TrackingApp *application = (TrackingApp*)userdata;
+	application->drawSamples = (state == 1);
 }
 
-void AdaptiveTracking::drawFlowChanged(int state, void* userdata) {
-	AdaptiveTracking *tracking = (AdaptiveTracking*)userdata;
-	tracking->drawFlow = state;
+void TrackingApp::drawFlowChanged(int state, void* userdata) {
+	TrackingApp *application = (TrackingApp*)userdata;
+	application->drawFlow = state;
 }
 
-void AdaptiveTracking::drawDebug(Mat& image) {
+void TrackingApp::drawDebug(Mat& image) {
 	cv::Scalar black(0, 0, 0); // blue, green, red
 	cv::Scalar red(0, 0, 255); // blue, green, red
 	cv::Scalar green(0, 255, 0); // blue, green, red
@@ -252,7 +252,7 @@ void AdaptiveTracking::drawDebug(Mat& image) {
 		opticalFlowTransitionModel->drawFlow(image, drawFlow - 1, green, red);
 }
 
-void AdaptiveTracking::drawCrosshair(Mat& image) {
+void TrackingApp::drawCrosshair(Mat& image) {
 	if (currentX >= 0 && currentY >= 0 && currentX < image.cols && currentY < image.rows) {
 		cv::Scalar gray(127, 127, 127); // blue, green, red
 		cv::Scalar black(0, 0, 0); // blue, green, red
@@ -263,7 +263,7 @@ void AdaptiveTracking::drawCrosshair(Mat& image) {
 	}
 }
 
-void AdaptiveTracking::drawBox(Mat& image) {
+void TrackingApp::drawBox(Mat& image) {
 	if (storedX >= 0 && storedY >= 0
 			&& currentX >= 0 && currentY >= 0 && currentX < image.cols && currentY < image.rows) {
 		cv::Scalar color(204, 102, 0); // blue, green, red
@@ -271,57 +271,57 @@ void AdaptiveTracking::drawBox(Mat& image) {
 	}
 }
 
-void AdaptiveTracking::drawGroundTruth(Mat& image, const Rect& target) {
+void TrackingApp::drawGroundTruth(Mat& image, const Rect& target) {
 	cv::rectangle(image, target, cv::Scalar(255, 153, 102), 2);
 }
 
-void AdaptiveTracking::drawTarget(Mat& image, optional<Rect> target, bool adapted) {
+void TrackingApp::drawTarget(Mat& image, optional<Rect> target, bool adapted) {
 	const cv::Scalar& color = adapted ? cv::Scalar(0, 255, 0) : cv::Scalar(0, 255, 255);
 	if (target)
 		cv::rectangle(image, *target, color, 2);
 }
 
-void AdaptiveTracking::onMouse(int event, int x, int y, int, void* userdata) {
-	AdaptiveTracking *tracking = (AdaptiveTracking*)userdata;
-	if (tracking->running && !tracking->adaptiveUsable) {
+void TrackingApp::onMouse(int event, int x, int y, int, void* userdata) {
+	TrackingApp *application = (TrackingApp*)userdata;
+	if (application->running && !application->adaptiveUsable) {
 		if (event == cv::EVENT_MOUSEMOVE) {
-			tracking->currentX = x;
-			tracking->currentY = y;
-			Mat& image = tracking->image;
-			tracking->frame.copyTo(image);
-			tracking->drawBox(image);
-			tracking->drawCrosshair(image);
+			application->currentX = x;
+			application->currentY = y;
+			Mat& image = application->image;
+			application->frame.copyTo(image);
+			application->drawBox(image);
+			application->drawCrosshair(image);
 			imshow(videoWindowName, image);
 		} else if (event == cv::EVENT_LBUTTONDOWN) {
-			if (tracking->storedX < 0 || tracking->storedY < 0) {
-				tracking->storedX = x;
-				tracking->storedY = y;
+			if (application->storedX < 0 || application->storedY < 0) {
+				application->storedX = x;
+				application->storedY = y;
 			}
 		} else if (event == cv::EVENT_LBUTTONUP) {
 			Logger& log = Loggers->getLogger("app");
-			Rect position(std::min(tracking->storedX, tracking->currentX), std::min(tracking->storedY, tracking->currentY),
-					abs(tracking->currentX - tracking->storedX), abs(tracking->currentY - tracking->storedY));
+			Rect position(std::min(application->storedX, application->currentX), std::min(application->storedY, application->currentY),
+					abs(application->currentX - application->storedX), abs(application->currentY - application->storedY));
 
 			if (position.width != 0 && position.height != 0) {
 				int tries = 0;
-				while (tries < 10 && !tracking->adaptiveUsable) {
+				while (tries < 10 && !application->adaptiveUsable) {
 					tries++;
-					tracking->adaptiveUsable = tracking->tracker->initialize(tracking->frame, position);
+					application->adaptiveUsable = application->tracker->initialize(application->frame, position);
 				}
-				if (tracking->adaptiveUsable) {
-					log.info("Initialized adaptive tracking after " + std::to_string(tries) + " tries");
-					tracking->storedX = -1;
-					tracking->storedY = -1;
-					tracking->currentX = -1;
-					tracking->currentY = -1;
-					Mat& image = tracking->image;
-					tracking->frame.copyTo(image);
-					tracking->drawTarget(image, optional<Rect>(position), true);
+				if (application->adaptiveUsable) {
+					log.info("Initialized tracking after " + std::to_string(tries) + " tries");
+					application->storedX = -1;
+					application->storedY = -1;
+					application->currentX = -1;
+					application->currentY = -1;
+					Mat& image = application->image;
+					application->frame.copyTo(image);
+					application->drawTarget(image, optional<Rect>(position), true);
 					imshow(videoWindowName, image);
 				} else {
 					log.warn("Could not initialize tracker after " + std::to_string(tries) + " tries (patch too small/big?)");
 					std::cerr << "Could not initialize tracker - press 'q' to quit program" << std::endl;
-					tracking->stop();
+					application->stop();
 					while ('q' != (char)cv::waitKey(10));
 				}
 			}
@@ -329,7 +329,7 @@ void AdaptiveTracking::onMouse(int event, int x, int y, int, void* userdata) {
 	}
 }
 
-void AdaptiveTracking::run() {
+void TrackingApp::run() {
 	Logger& log = Loggers->getLogger("app");
 	running = true;
 	paused = false;
@@ -450,7 +450,7 @@ void AdaptiveTracking::run() {
 					double unionArea = truth.area() + position->area() - intersectionArea;
 					double overlap = unionArea > 0 ? intersectionArea / unionArea : 0;
 					overlapSum += overlap;
-					if (overlap >= 0.5)
+					if (overlap >= 1.0 / 3.0)
 						hitCount++;
 				}
 
@@ -489,19 +489,19 @@ void AdaptiveTracking::run() {
 				}
 			}
 		}
-		std::cout << "hit rate: " << (100 * static_cast<double>(hitCount) / frameCount) << "%" << std::endl;
+		std::cout << "hit rate: " << (100 * static_cast<double>(hitCount) / frameCount) << "% (frames with overlap >= 1/3)" << std::endl;
 		std::cout << "average overlap: " << (100 * overlapSum / frameCount) << "%" << std::endl;
 	}
 }
 
-void AdaptiveTracking::stop() {
+void TrackingApp::stop() {
 	running = false;
 }
 
 int main(int argc, char *argv[]) {
 	int deviceId;
-	string configFile, video, directory, bobot, simple, outputFile;
-	bool useVideo, useDirectory, useCamera, useBobot, useSimple;
+	string configFile, video, directory, bobot, simple, outputFile = "";
+	bool useVideo = false, useDirectory = false, useCamera = false, useBobot = false, useSimple = false;
 	int outputFps = -1;
 
 	try {
@@ -511,11 +511,11 @@ int main(int argc, char *argv[]) {
 			("config,c", po::value<string>(&configFile)->default_value("default.cfg","default.cfg"), "Tracking configuration file.")
 			("video,v", po::value<string>(&video), "Video file")
 			("directory,i", po::value<string>(&directory), "Directory containing the images")
-			("device,d", po::value<int>(&deviceId)->implicit_value(0), "Device ID of the webcam")
+			("device,d", po::value<int>(&deviceId), "Device ID of the webcam")
 			("annotations-bobot,b", po::value<string>(&bobot), "Ground truth annotations in BoBoT format")
 			("annotations-simple,s", po::value<string>(&simple), "Ground truth annotations in simple format")
-			("output,o", po::value< string >(&outputFile)->default_value("","none"), "Filename to a video file for storing the image data.")
-			("output-fps,f", po::value<int>(&outputFps)->default_value(-1), "Framerate of the output video.")
+			("output,o", po::value< string >(&outputFile), "Filename to a video file for storing the image data.")
+			("output-fps,f", po::value<int>(&outputFps), "Framerate of the output video.")
 			;
 
 		po::variables_map vm;
@@ -584,7 +584,7 @@ int main(int argc, char *argv[]) {
 	read_info(configFile, config);
 	config.put("tracking.initialization", (useBobot || useSimple) ? "groundtruth" : "manual");
 	try {
-		unique_ptr<AdaptiveTracking> tracker(new AdaptiveTracking(move(annotatedImageSource), move(imageSink), config.get_child("tracking")));
+		unique_ptr<TrackingApp> tracker(new TrackingApp(move(annotatedImageSource), move(imageSink), config.get_child("tracking")));
 		tracker->run();
 	} catch (std::exception& exc) {
 		Loggers->getLogger("app").error(string("A wild exception appeared: ") + exc.what());

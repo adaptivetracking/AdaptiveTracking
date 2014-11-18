@@ -1,12 +1,12 @@
 /*
- * TrackingBenchmark.hpp
+ * Benchmark.hpp
  *
  *  Created on: 17.02.2014
  *      Author: poschmann
  */
 
-#ifndef TRACKINGBENCHMARK_HPP_
-#define TRACKINGBENCHMARK_HPP_
+#ifndef BENCHMARK_HPP_
+#define BENCHMARK_HPP_
 
 #include "logging/Logger.hpp"
 #include "imageio/AnnotatedImageSource.hpp"
@@ -38,15 +38,15 @@ using std::make_shared;
 /**
  * Benchmark for tracking algorithms.
  */
-class TrackingBenchmark {
+class Benchmark {
 public:
 
 	/**
-	 * Constructs a new tracking benchmark, constructing the tracker from the given configuration.
+	 * Constructs a new benchmark, constructing the tracker from the given configuration.
 	 *
 	 * @param[in] config The configuration of the tracker.
 	 */
-	TrackingBenchmark(ptree& config);
+	Benchmark(ptree& config);
 
 	/**
 	 * Tests the tracker using the test sequences given by the config.
@@ -86,4 +86,4 @@ private:
 	unique_ptr<CondensationTracker> tracker; ///< The tracker under test.
 };
 
-#endif /* TRACKINGBENCHMARK_HPP_ */
+#endif /* BENCHMARK_HPP_ */

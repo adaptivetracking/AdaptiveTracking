@@ -51,14 +51,6 @@ public:
 	 */
 	Logger& getLoggerFor(const std::string fileName);
 
-	/**
-	 * Loads all the loggers and their configuration from a config file. TODO!
-	 *
-	 * @param[in] filename The name of the config file to load.
-	 * @return Maybe something
-	 */
-	void load(const std::string filename) {}; // Make static?
-
 private:
 	std::map<std::string, Logger> loggers;	///< A map of all the loggers and their names.
 };

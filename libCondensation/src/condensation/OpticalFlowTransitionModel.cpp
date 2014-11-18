@@ -44,22 +44,6 @@ OpticalFlowTransitionModel::OpticalFlowTransitionModel(shared_ptr<TransitionMode
 				positionDeviation(positionDeviation),
 				sizeDeviation(sizeDeviation),
 				generator(boost::mt19937(time(0)), boost::normal_distribution<>()) {
-//	float gridY = 1 / static_cast<float>(gridSize.height);
-//	float gridX = 1 / static_cast<float>(gridSize.width);
-//	Point2f gridPoint(-0.5f + 0.5 * gridX, -0.5f + 0.5 * gridY);
-//	for (int y = 0; y < gridSize.height; ++y) {
-//		for (int x = 0; x < gridSize.width; ++x) {
-//			float r = 1.f / 2.f;
-//			if (!circle || gridPoint.x * gridPoint.x + gridPoint.y * gridPoint.y < r * r)
-//				templatePoints.push_back(gridPoint);
-//			gridPoint.x += gridX;
-//		}
-//		gridPoint.x = -0.5f + gridX / 2;
-//		gridPoint.y += gridY;
-//	}
-
-	// TODO die variante erscheint bissl besser (größerer abstand der punkte zum rand)
-	// braucht aber evtl. bissl mehr scatter nötig
 	float gridY = 1.f / static_cast<float>(gridSize.height + 2);
 	float gridX = 1.f / static_cast<float>(gridSize.width + 2);
 	float r = 0.5f - 0.5f * (gridX + gridY);

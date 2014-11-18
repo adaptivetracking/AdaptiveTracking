@@ -1,12 +1,12 @@
 /*
- * AdaptiveTracking.hpp
+ * TrackingApp.hpp
  *
  *  Created on: 14.05.2013
  *      Author: poschmann
  */
 
-#ifndef ADAPTIVETRACKING_HPP_
-#define ADAPTIVETRACKING_HPP_
+#ifndef TRACKINGAPP_HPP_
+#define TRACKINGAPP_HPP_
 
 #include "imageio/AnnotatedImageSource.hpp"
 #include "imageio/ImageSink.hpp"
@@ -34,17 +34,20 @@ using std::unique_ptr;
 using std::shared_ptr;
 using std::make_shared;
 
-class AdaptiveTracking {
+/**
+ * Application for visual adaptive tracking in image sequences.
+ */
+class TrackingApp {
 public:
 
 	/**
-	 * Constructs a new adaptive tracking application.
+	 * Constructs a new tracking application.
 	 *
 	 * @param[in] imageSource The source for potentially annotated images.
 	 * @param[in] imageSink The sink for images with the tracking output (bounding boxes) drawn on them.
 	 * @param[in] config The configuration of the tracking application.
 	 */
-	AdaptiveTracking(unique_ptr<AnnotatedImageSource> imageSource, unique_ptr<ImageSink> imageSink, ptree& config);
+	TrackingApp(unique_ptr<AnnotatedImageSource> imageSource, unique_ptr<ImageSink> imageSink, ptree& config);
 
 	/**
 	 * Starts the tracking.
@@ -102,4 +105,4 @@ private:
 	shared_ptr<OpticalFlowTransitionModel> opticalFlowTransitionModel;
 };
 
-#endif /* ADAPTIVETRACKING_HPP_ */
+#endif /* TRACKINGAPP_HPP_ */

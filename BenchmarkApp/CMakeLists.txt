@@ -12,10 +12,10 @@ find_package(OpenCV 2.4.3 REQUIRED core highgui video)
 
 # source and header files
 set(HEADERS
-	TrackingBenchmark.hpp
+	Benchmark.hpp
 )
 set(SOURCE
-	TrackingBenchmark.cpp
+	Benchmark.cpp
 )
 
 # add dependencies

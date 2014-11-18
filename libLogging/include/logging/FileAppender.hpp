@@ -42,6 +42,9 @@ public:
 
 private:
 
+	FileAppender(const FileAppender&);
+	FileAppender& operator=(const FileAppender&);
+
 	/**
 	 * Creates a new string containing the formatted current time.
 	 *
@@ -49,7 +52,6 @@ private:
 	 */
 	std::string getCurrentTime();
 
-	// TODO: We should make the copy constructor (and assignment operator?) private because we have an ofstream as member variable! Read that somewhere on stackoverflow.
 	std::ofstream file;
 };
 
