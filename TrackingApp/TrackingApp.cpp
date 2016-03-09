@@ -306,7 +306,7 @@ void TrackingApp::onMouse(int event, int x, int y, int, void* userdata) {
 				int tries = 0;
 				while (tries < 10 && !application->adaptiveUsable) {
 					tries++;
-					application->adaptiveUsable = application->tracker->initialize(application->frame, position);
+					application->adaptiveUsable = !!application->tracker->initialize(application->frame, position);
 				}
 				if (application->adaptiveUsable) {
 					log.info("Initialized tracking after " + std::to_string(tries) + " tries");
@@ -388,7 +388,7 @@ void TrackingApp::run() {
 							&& truth.br().x < image.cols && truth.br().y < image.rows) {
 						tries++;
 						optional<Rect> position = tracker->initialize(frame, truth);
-						adaptiveUsable = position;
+						adaptiveUsable = !!position;
 						drawTarget(image, position, true);
 						if (adaptiveUsable) {
 							log.info("Initialized adaptive tracking after " + std::to_string(tries) + " tries");
