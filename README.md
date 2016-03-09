@@ -80,7 +80,7 @@ Examples:
 
 ### BenchmarkApp
 
-This application runs test sequences on several algorithms, evaluating their performance. Two scores are computed: A hit ratio (the target is considered hit if the tracking bounding box and the ground truth bounding box have an overlap ratio of at least 50%) and the average overlap ratio. Detailled results (scores of each run and files containing the tracking output in the annotation format) can be found in the results directory.
+This application runs test sequences on several algorithms, evaluating their performance. Two scores are computed: A hit ratio (the target is considered hit if the tracking bounding box and the ground truth bounding box have an overlap ratio of at least 1/3) and the average overlap ratio. Detailled results (scores of each run and files containing the tracking output in the annotation format) can be found in the results directory.
 
 1. Change into the application directory: `$ cd build/BenchmarkApp`
 2. Adjust `tests.cfg` to include the annotated image sequences that should be used for the benchmark
