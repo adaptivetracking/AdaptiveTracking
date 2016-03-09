@@ -33,14 +33,15 @@ ExtendedHogFilter::ExtendedHogFilter(size_t cellSize, size_t binCount, bool sign
 		for (int y = 0; y < 512; ++y) {
 			double gradientY = static_cast<double>(y - 256) / (2. * 255.);
 			double direction = atan2(gradientY, gradientX);
+			if (direction < 0)
+				direction += 2 * CV_PI;
 			double magnitude = sqrt(gradientX * gradientX + gradientY * gradientY);
 			double binIndex;
 			if (signedGradients) {
-				direction += CV_PI;
 				binIndex = direction * binCount / (2 * CV_PI);
 			} else { // unsigned gradients
-				if (direction < 0)
-					direction += CV_PI;
+				if (direction >= CV_PI)
+					direction -= CV_PI;
 				binIndex = direction * binCount / CV_PI;
 			}
 			if (interpolateBins) {
@@ -162,26 +163,30 @@ void ExtendedHogFilter::buildInitialHistograms(Mat& histograms, const Mat& image
 
 void ExtendedHogFilter::buildDescriptors(Mat& descriptors, size_t cellRowCount, size_t cellColumnCount, size_t descriptorSize) const {
 	size_t binHalfCount = binCount / 2;
-	size_t lastIndex = descriptorSize - 1;
 
 	// compute gradient energy of cells
+	Mat energies(descriptors.rows, descriptors.cols, CV_32FC1);
 	if (signedGradients) {
 		// gradient energy should be computed over unsigned gradients, so the signed parts have to be added up
 		for (size_t rowIndex = 0; rowIndex < cellRowCount; ++rowIndex) {
 			for (size_t colIndex = 0; colIndex < cellColumnCount; ++colIndex) {
+				float energy = 0;
 				float* histogramValues = descriptors.ptr<float>(rowIndex, colIndex);
 				for (size_t binIndex = 0; binIndex < binHalfCount; ++binIndex) {
-					float sum = histogramValues[binIndex] + histogramValues[binIndex + binHalfCount];
-					histogramValues[lastIndex] += sum * sum; // energy is temporarily stored in last value of descriptor
+					float unsignedBinValue = histogramValues[binIndex] + histogramValues[binIndex + binHalfCount];
+					energy += unsignedBinValue * unsignedBinValue;
 				}
+				energies.at<float>(rowIndex, colIndex) = energy;
 			}
 		}
 	} else {
 		for (size_t rowIndex = 0; rowIndex < cellRowCount; ++rowIndex) {
 			for (size_t colIndex = 0; colIndex < cellColumnCount; ++colIndex) {
+				float energy = 0;
 				float* histogramValues = descriptors.ptr<float>(rowIndex, colIndex);
 				for (size_t binIndex = 0; binIndex < binCount; ++binIndex)
-					histogramValues[lastIndex] += histogramValues[binIndex] * histogramValues[binIndex]; // energy is temporarily stored in last value of descriptor
+					energy += histogramValues[binIndex] * histogramValues[binIndex];
+				energies.at<float>(rowIndex, colIndex) = energy;
 			}
 		}
 	}
@@ -197,15 +202,15 @@ void ExtendedHogFilter::buildDescriptors(Mat& descriptors, size_t cellRowCount, 
 				int c1 = colIndex;
 				int c0 = std::max(0, static_cast<int>(colIndex) - 1);
 				int c2 = std::min(colIndex + 1, cellColumnCount - 1);
-				float sqn00 = descriptors.ptr<float>(r0, c0)[lastIndex];
-				float sqn01 = descriptors.ptr<float>(r0, c1)[lastIndex];
-				float sqn02 = descriptors.ptr<float>(r0, c2)[lastIndex];
-				float sqn10 = descriptors.ptr<float>(r1, c0)[lastIndex];
-				float sqn11 = descriptors.ptr<float>(r1, c1)[lastIndex];
-				float sqn12 = descriptors.ptr<float>(r1, c2)[lastIndex];
-				float sqn20 = descriptors.ptr<float>(r2, c0)[lastIndex];
-				float sqn21 = descriptors.ptr<float>(r2, c1)[lastIndex];
-				float sqn22 = descriptors.ptr<float>(r2, c2)[lastIndex];
+				float sqn00 = energies.at<float>(r0, c0);
+				float sqn01 = energies.at<float>(r0, c1);
+				float sqn02 = energies.at<float>(r0, c2);
+				float sqn10 = energies.at<float>(r1, c0);
+				float sqn11 = energies.at<float>(r1, c1);
+				float sqn12 = energies.at<float>(r1, c2);
+				float sqn20 = energies.at<float>(r2, c0);
+				float sqn21 = energies.at<float>(r2, c1);
+				float sqn22 = energies.at<float>(r2, c2);
 				float n1 = 1.f / sqrt(sqn00 + sqn01 + sqn10 + sqn11 + eps);
 				float n2 = 1.f / sqrt(sqn01 + sqn02 + sqn11 + sqn12 + eps);
 				float n3 = 1.f / sqrt(sqn10 + sqn11 + sqn20 + sqn21 + eps);
@@ -256,15 +261,15 @@ void ExtendedHogFilter::buildDescriptors(Mat& descriptors, size_t cellRowCount, 
 				int c1 = colIndex;
 				int c0 = std::max(0, static_cast<int>(colIndex) - 1);
 				int c2 = std::min(colIndex + 1, cellColumnCount - 1);
-				float sqn00 = descriptors.ptr<float>(r0, c0)[lastIndex];
-				float sqn01 = descriptors.ptr<float>(r0, c1)[lastIndex];
-				float sqn02 = descriptors.ptr<float>(r0, c2)[lastIndex];
-				float sqn10 = descriptors.ptr<float>(r1, c0)[lastIndex];
-				float sqn11 = descriptors.ptr<float>(r1, c1)[lastIndex];
-				float sqn12 = descriptors.ptr<float>(r1, c2)[lastIndex];
-				float sqn20 = descriptors.ptr<float>(r2, c0)[lastIndex];
-				float sqn21 = descriptors.ptr<float>(r2, c1)[lastIndex];
-				float sqn22 = descriptors.ptr<float>(r2, c2)[lastIndex];
+				float sqn00 = energies.at<float>(r0, c0);
+				float sqn01 = energies.at<float>(r0, c1);
+				float sqn02 = energies.at<float>(r0, c2);
+				float sqn10 = energies.at<float>(r1, c0);
+				float sqn11 = energies.at<float>(r1, c1);
+				float sqn12 = energies.at<float>(r1, c2);
+				float sqn20 = energies.at<float>(r2, c0);
+				float sqn21 = energies.at<float>(r2, c1);
+				float sqn22 = energies.at<float>(r2, c2);
 				float n1 = 1.f / sqrt(sqn00 + sqn01 + sqn10 + sqn11 + eps);
 				float n2 = 1.f / sqrt(sqn01 + sqn02 + sqn11 + sqn12 + eps);
 				float n3 = 1.f / sqrt(sqn10 + sqn11 + sqn20 + sqn21 + eps);
